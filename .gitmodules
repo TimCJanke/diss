@@ -1,0 +1,3 @@
+[submodule "mvpreg"]
+	path = mvpreg
+	url = https://github.com/TimCJanke/mvpreg
