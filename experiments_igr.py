@@ -29,14 +29,21 @@ from mvpreg.mvpreg.evaluation import scoring_rules
 #from mvpreg.mvpreg.evaluation import visualization
 
 #%%
-def run_experiment(data_set_config, model_configs, copulas = ["independence", "gaussian", "r-vine"], path=None):
+def run_experiment(data_set_config, model_configs, copulas = ["independence", "gaussian", "r-vine"], path=None, name=None):
     
+    ### dir to save the results ###
     if path is None:
-        path = "results/"+str(data_set_config["name"])+"/"+datetime.now().strftime("%Y%m%d%H%M")
+        path = "results/"+str(data_set_config["name"])+"/"
+        if name is None:
+            path = path+datetime.now().strftime("%Y%m%d%H%M")
+        else:
+            path = path+name
+    if os.path.exists(path):
+        path = path+datetime.now().strftime("%Y%m%d%H%M") 
     os.makedirs(path)
 
 
-    # fetch data set
+    #### fetch data set ###
     data_set_name = data_set_config["name"]
     if data_set_name == "wind_spatial":
         data = data_utils.fetch_wind_spatial(**data_set_config["fetch_data"])
@@ -46,11 +53,24 @@ def run_experiment(data_set_config, model_configs, copulas = ["independence", "g
     else:
         raise ValueError(f"Unknown data set: {data_set_name}")
     
-    # prepare data split
+    
+    ### prepare data set ###
+    if data_set_config["datetime_idx"] is not None:
+        x = pd.DataFrame(x, index=dates)
+        x = x.loc[data_set_config["datetime_idx"]]
+        
+        y = pd.DataFrame(y, index=dates)
+        y = y.loc[data_set_config["datetime_idx"]]
+        
+        dates = y.index
+        x = x.values
+        y = y.values
+    
     N = data_set_config["n_total"]
     if N is not None:
         x = x[0:N, ...]
         y = y[0:N, ...]
+        dates = dates[0:N]
     
     n_train = data_set_config["n_train"]
     n_train_val = data_set_config["n_train"]+data_set_config["n_val"]
@@ -59,14 +79,16 @@ def run_experiment(data_set_config, model_configs, copulas = ["independence", "g
     ts_splitter = TimeSeriesSplit(int(np.floor((len(y)-n_train_val)/n_test)),
                                   max_train_size=n_train_val,
                                   test_size=n_test)
-
+    
+    
+    ### iterate over data set splits ###
     y_predict = {}
     pbar = tqdm(total=ts_splitter.get_n_splits())
     for i, (idx_train_val, idx_test) in enumerate(ts_splitter.split(x)):
         
+        # prepare inputs
         idx_train = idx_train_val[0:n_train]
-        idx_val = idx_train_val[n_train:]
-    
+        idx_val = idx_train_val[n_train:]    
         fit_dict={"x": x[idx_train],
                   "y": y[idx_train],
                   "x_val": x[idx_val],
@@ -74,13 +96,11 @@ def run_experiment(data_set_config, model_configs, copulas = ["independence", "g
                   "epochs": data_set_config["epochs"],
                   "early_stopping": data_set_config["early_stopping"],
                   "patience": 20,
-                  "plot_learning_curve": False}
-    
+                  "plot_learning_curve": False}    
         predict_dict={"x": x[idx_test],"n_samples": data_set_config["n_samples_predict"]}
         
-
         
-        ### test data and baseline ###
+        ### groundtruth data and baseline ###
         if i==0:
             dates_test = dates[idx_test]
             y_test = [y[idx_test]]
@@ -94,14 +114,16 @@ def run_experiment(data_set_config, model_configs, copulas = ["independence", "g
         ### iterate over models ###
         for mdl_name, mdl_cnfg in model_configs.items():
             
-            #model_class = globals()[mdl_name]
             model_class = mdl_cnfg["class"]
-
+            
+            # iterate over all parameter config combinations for this model
             for config_tmp in ParameterGrid(mdl_cnfg["config_var"]):
                 
-                mdl_id = mdl_name+"_"+'_'.join(map(str, list(config_tmp.values())))
-                                
-                model_tmp =  model_class(dim_in=x.shape[1], dim_out=y.shape[1], **mdl_cnfg["config_fixed"], **config_tmp)
+                mdl_id = mdl_name+"---"+"_".join(["("+k+":"+v+")" for k,v in list(zip(list(map(str, list(config_tmp.keys()))), list(map(str, list(config_tmp.values())))))])                
+                
+                model_tmp =  model_class(dim_in=x.shape[1], dim_out=y.shape[1], **mdl_cnfg["config_fixed"], **config_tmp) # init model
+                
+                # handle special case of LogitNormal distribution on (0,1)
                 if hasattr(model_tmp, "distribution"):
                     if model_tmp.distribution== "LogitNormal":
                         fit_dict_ = {**fit_dict}
@@ -112,18 +134,19 @@ def run_experiment(data_set_config, model_configs, copulas = ["independence", "g
                 else:
                     fit_dict_ = fit_dict
                 
+                # fit model
                 model_tmp.fit(**fit_dict_)
                 
-                # simulate for different copulas
+                # simulate for different copulas if model has one
                 if hasattr(model_tmp, "copula"):
                     for c in copulas:
                         model_tmp.copula_type = c
                         model_tmp.fit_copula(fit_dict_["x"], fit_dict_["y"])
                         
                         if i==0:
-                            y_predict[mdl_id+"_"+c]=[model_tmp.simulate(**predict_dict)]
+                            y_predict[mdl_id+"_"+"(copula:"+c+")"]=[model_tmp.simulate(**predict_dict)]
                         else:
-                            y_predict[mdl_id+"_"+c].append(model_tmp.simulate(**predict_dict))
+                            y_predict[mdl_id+"_"+"(copula:"+c+")"].append(model_tmp.simulate(**predict_dict))
                 
                 else:
                     if i==0:
@@ -134,11 +157,11 @@ def run_experiment(data_set_config, model_configs, copulas = ["independence", "g
          
         # save intermediate results
         pd.DataFrame(np.concatenate(y_test, axis=0), index=dates_test).to_csv(path+"/y_test.csv")
-
         with open(path+"/results.pkl", 'wb') as f:
             pickle.dump({key: np.concatenate(value) for key, value in y_predict.items()}, f)
         
         pbar.update()
+    
     pbar.close()        
         
                 
@@ -213,6 +236,7 @@ if __name__ == "__main__":
                        "fetch_data":{"zones": [1,2],#list(np.arange(1,11)),
                                      "features": ['WE10', 'WE100', 'WD10', 'WD100', 'WD_difference', 'WS_ratio'],
                                      "hours": list(np.arange(0,24))},
+                       "datetime_idx": pd.date_range(start="2012/2/1 00:00", end="2012/5/1 23:00", freq='H'),               
                        "n_total": None,
                        "n_train": 24*25*7,
                        "n_val": 24*2*7,
@@ -226,7 +250,8 @@ if __name__ == "__main__":
                        "fetch_data":{"zones": [1, 2, 3],#np.arange(1,11),
                                      "features": ['WE10', 'WE100', 'WD10', 'WD100', 'WD_difference', 'WS_ratio'],
                                      "hours": list(np.arange(0,24))},
-                       "n_total": 24*13*7,
+                       "datetime_idx": pd.date_range(start="2012/2/1 00:00", end="2012/5/1 23:00", freq='H'),
+                       "n_total": None,
                        "n_train": 24*10*7,
                        "n_val": 24*7,
                        "n_test": 24*7,
@@ -252,41 +277,51 @@ if __name__ == "__main__":
                             "config_var": {"distribution": ["Normal", "LogitNormal"]}
                             }
     
-    # model_configs["QR"] = {"class": QR,
-    #                        "config_fixed": {**nn_base_config, "taus": list(np.round(np.arange(0.025,1.0, 0.025), 4))},
-    #                        "config_var": {}
-    #                        }
+    model_configs["QR"] = {"class": QR,
+                            "config_fixed": {**nn_base_config, "taus": list(np.round(np.arange(0.025,1.0, 0.025), 4))},
+                            "config_var": {}
+                            }
     
-    # model_configs["DGR"] = {"config_fixed": {**nn_base_config, 
-    #                                        "n_samples_train": 10,
-    #                                        "n_samples_val": 200,
-    #                                        "dim_latent": 20},
-    #                         "config_var": {"conditioning": ["concatenate", "FiLM"], 
-    #                                       "loss": ["ES", "VS"]}
-    #                         }
+    model_configs["DGR"] = {"class": DGR,
+                            "config_fixed": {**nn_base_config, 
+                                            "n_samples_train": 10,
+                                            "n_samples_val": 200,
+                                            "dim_latent": 20},
+                            "config_var": {"conditioning": ["concatenate", "FiLM"], 
+                                          "loss": ["ES", "VS"]}
+                            }
     
-    # model_configs["GAN"] = {"config_fixed": {**nn_base_config, 
+    # model_configs["GAN"] = {"class": GAN,
+    #                         "config_fixed": {**nn_base_config, 
     #                                         "n_samples_val": 200,
     #                                         "dim_latent": 20,
-    #                                         "optimizer": tf.keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.1),
-    #                                         "optimizer_discriminator": tf.keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.1),
+    #                                         #"optimizer": tf.keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.1),
+    #                                         "optimizer": "Adam",
+    #                                         #"optimizer_discriminator": tf.keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.1),
     #                                         "label_smoothing": 0.1
     #                                         },
-    #                         "config_var": {"conditioning": ["concatenate", "FiLM"]}
+                            
+    #                         "config_var": {"conditioning": ["concatenate", "FiLM"],
+    #                                         "optimizer_kwargs": [{"beta_1": 0.0}, {"learning_rate": 0.0001}],
+    #                                         "optimizer_discriminator_kwargs": [{"beta_1": 0.0}, {"learning_rate": 0.0001}]}
     #                         }
 
-    run_experiment(data_set_config, model_configs, copulas=["independence"])
+    run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian"],  name="test")
     
-# y_true=np.random.normal(size=(1000,7))
-# y_pred = np.random.normal(size=(1000,7,75))
-# taus=[0.1,0.5,0.9]
-# scores={}
-# return_single_scores=True
 
-# q_pred = np.transpose(np.quantile(y_pred, q=taus, axis=2, method="linear"), (1,2,0)) # [N, D, len(taus)]
-# s = scoring_rules.pinball_score(np.reshape(y_true, (-1,1)), np.reshape(q_pred, (-1, len(taus))), taus=taus, return_single_scores=True) # [NxD,len(taus)]
-# for i, tau in enumerate(taus):
-#     if return_single_scores:
-#         scores["PB_"+str(tau)] = np.mean(np.reshape(s[:,i], (-1, y_true.shape[1])), axis=1)
-#     else:
-#         scores["PB_"+str(tau)] = np.mean(s[:,i])
+# d = {}
+# y = {}
+# for mdl_name, mdl_cnfg in model_configs.items():    
+#     # iterate over all parameter config combinations for this model
+#     d[mdl_name] = {}
+#     y[mdl_name] = {}
+#     for config_tmp in ParameterGrid(mdl_cnfg["config_var"]):
+#         ks = list(map(str, list(config_tmp.keys())))
+#         vls = list(map(str, list(config_tmp.values())))
+        
+#         mdl_id = mdl_name+"_"+'_'.join(map(str, list(config_tmp.values()))) # create model id
+#         d[mdl_name][mdl_id] = config_tmp
+#         y[mdl_name][mdl_id] = np.random.normal(size=(100,3,5))
+        
+# list(zip(list(map(str, list(config_tmp.keys()))), list(map(str, list(config_tmp.values())))))
+# mdl_name+"---"+"_".join(["("+k+":"+v+")" for k,v in list(zip(list(map(str, list(config_tmp.keys()))), list(map(str, list(config_tmp.values())))))])
