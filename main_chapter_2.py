@@ -1,11 +1,14 @@
 #%%
 import numpy as np
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 import tensorflow as tf
 import pandas as pd
 from sklearn.model_selection import TimeSeriesSplit
 import pickle
-import os
 from datetime import datetime
+from tqdm import tqdm
+from sklearn.model_selection import ParameterGrid
 
 from mvpreg.mvpreg.data import data_utils
 from mvpreg.mvpreg import DeepQuantileRegression as DQR
@@ -15,6 +18,9 @@ from mvpreg.mvpreg import AdversarialDGR as CGAN
 
 from mvpreg.mvpreg.evaluation import scoring_rules
 from mvpreg.mvpreg.evaluation import visualization
+
+#tf.get_logger().setLevel('WARNING')
+#tf.autograph.set_verbosity(1)
 
 
 #%% Data and hyperparams
@@ -54,25 +60,32 @@ if data_set == "wind_spatial":
                     "input_scaler": "Standard",
                     "output_scaler": None}
 
+    param_config_fixed = {} 
+    param_config_var = {"distribution": ["Normal", "LogitNormal"]}
 
-    
-    param_config ={"distribution": "LogitNormal",
-                  "copula_type": "gaussian"}
-    
-qr_config ={"taus": np.arange(0.05,1.0, 0.05),
-            "copula_type": "gaussian"}
+qr_config_fixed = {"taus": np.arange(0.025,1.0, 0.025)}
+copulas = ["independence", "gaussian", "r-vine"]
 
-dgr_config = {"n_samples_train": 10,
+
+# DGR
+dgr_config_fixed = {"n_samples_train": 10,
               "n_samples_val": 200,
-              "dim_latent": y.shape[1],
-              "conditioning": "FiLM"}
+              "dim_latent": y.shape[1]*2}
+dgr_config_var={"conditioning": ["concatenate", "FiLM"], "loss": ["ES", "VS"]}
 
-gan_config = {**dgr_config,
-             "optimizer": tf.keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.1),
-             "optimizer_discriminator": tf.keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.1),
-             "label_smoothing": 0.1}
-_=gan_config.pop("n_samples_train")
 
+#GAN
+gan_config_fixed = {**dgr_config_fixed,
+                     "optimizer": tf.keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.1),
+                     "optimizer_discriminator": tf.keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.1),
+                     "label_smoothing": 0.1}
+_=gan_config_fixed.pop("n_samples_train")
+gan_config_var={"conditioning": ["concatenate", "FiLM"]}
+
+
+
+
+#%%
 nb_train = config["train_test"]["n_train"]+config["train_test"]["n_val"]
 nb_test = config["train_test"]["n_test"]
 
@@ -84,24 +97,22 @@ ts_splitter = TimeSeriesSplit(n_splits=2,
                               max_train_size=config["train_test"]["n_train"]+config["train_test"]["n_val"],
                               test_size=config["train_test"]["n_test"])
 
-#%%
-y_predict = {"DATA":[],
-             "QR":[],
-             "PARAM":[],
-             "DGR":[],
-             "GAN":[]}
+
+y_predict = {}
 y_test = []
+
+pbar = tqdm(total=ts_splitter.get_n_splits())
 for i, (idx_train_val, idx_test) in enumerate(ts_splitter.split(x)):
+        
     idx_train = idx_train_val[0:config["train_test"]["n_train"]]
     idx_val = idx_train_val[config["train_test"]["n_train"]:]
-
 
     fit_dict={"x": x[idx_train],
               "y": y[idx_train],
               "x_val": x[idx_val],
               "y_val": y[idx_val], 
-              "epochs":1000,
-              "early_stopping":True,
+              "epochs": 1000,
+              "early_stopping": True,
               "patience": 20,
               "plot_learning_curve": False}
 
@@ -115,40 +126,71 @@ for i, (idx_train_val, idx_test) in enumerate(ts_splitter.split(x)):
 
     
     ### QR ####
-    model_qr = DQR(**nn_base_config, **qr_config)
-    model_qr.fit(**fit_dict)
-    y_predict["QR"].append(model_qr.simulate(**predict_dict))
+    model_qr = DQR(**nn_base_config, **qr_config_fixed)
+    model_qr.fit(**fit_dict, fit_copula_model=False)
     
+    for c in copulas:
+        model_qr.copula_type = c
+        model_qr.fit_copula(fit_dict["x"], fit_dict["y"])
+        if i==0:
+            y_predict["QR_"+c] = [model_qr.simulate(**predict_dict)]
+        else:
+            y_predict["QR_"+c].append(model_qr.simulate(**predict_dict))
+        
     
     ### parametric ###
-    model_param = PRM(**nn_base_config, **param_config)    
-    if param_config["distribution"] == "LogitNormal":
-        model_param.fit(x=fit_dict["x"], 
-                        y=np.clip(fit_dict["y"], 0.0+1e-3, 1.0-1e-3), 
-                        x_val=fit_dict["x_val"],
-                        y_val=np.clip(fit_dict["y_val"], 0.0+1e-3, 1.0-1e-3),
-                        epochs=fit_dict["epochs"],
-                        early_stopping=fit_dict["early_stopping"],
-                        patience=fit_dict["patience"],
-                        plot_learning_curve=fit_dict["plot_learning_curve"])
-    else:
-        model_param.fit(**fit_dict)
-    y_predict["PARAM"].append(model_param.simulate(**predict_dict))
+    for config_tmp in ParameterGrid(dgr_config_var):
+        model_param = PRM(**nn_base_config, **param_config_fixed, **config_tmp)
+        if model_param.distribution == "LogitNormal":
+            fit_dict_lognorm = {**fit_dict}
+            fit_dict_lognorm["y"] = np.clip(fit_dict["y"], 0.0+1e-3, 1.0-1e-3)
+            fit_dict_lognorm["y_val"] = np.clip(fit_dict["y_val"], 0.0+1e-3, 1.0-1e-3)
+            model_param.fit(**fit_dict_lognorm, fit_copula_model=False)
+        else:
+            model_param.fit(**fit_dict, fit_copula_model=False)
+    
+            for c in copulas:
+                model_param.copula_type = c
+                model_param.fit_copula(fit_dict["x"], np.clip(fit_dict["y"], 0.0+1e-3, 1.0-1e-3))
+                nme_tmp="PARAM_"+'_'.join(map(str, list(config_tmp.values())))+"_"+c
+                if i==0:
+                    y_predict[nme_tmp] = [model_param.simulate(**predict_dict)]
+                else:
+                    y_predict[nme_tmp].append(model_param.simulate(**predict_dict))
 
 
     ### ScoringRule ####
-    model_dgr = DGR(**nn_base_config, **dgr_config)
-    model_dgr.fit(**fit_dict)
-    y_predict["DGR"].append(model_dgr.simulate(**predict_dict))
+    for config_tmp in ParameterGrid(dgr_config_var):
+        model_dgr = DGR(**nn_base_config, **dgr_config_fixed, **config_tmp)
+        model_dgr.fit(**fit_dict)
+        if i==0:
+            y_predict["DGR_"+'_'.join(map(str, list(config_tmp.values())))]=model_dgr.simulate(**predict_dict)
+        else:
+            y_predict["DGR_"+'_'.join(map(str, list(config_tmp.values())))].append(model_dgr.simulate(**predict_dict))
 
 
-    ### CGAN ###
-    model_gan = CGAN(**nn_base_config, **gan_config)
-    model_gan.fit(**fit_dict)
-    y_predict["GAN"].append(model_gan.simulate(**predict_dict))
+    ### GAN ####
+    name = "CGAN"
+    config_fixed=
+    model = globals()[name]
+    mdls=[]
+    for config_tmp in ParameterGrid(gan_config_var):
+        model =  CGAN(**nn_base_config, **gan_config_fixed, **config_tmp)
+        mdls.append(model)
+        model.fit(**fit_dict)
+        mdl_name = name+"_"+'_'.join(map(str, list(config_tmp.values())))
+        if i==0:
+            y_predict[mdl_name]=model.simulate(**predict_dict)
+        else:
+            y_predict[mdl_name].append(model.simulate(**predict_dict))
+
+    pbar.update()
+pbar.close()
+
+
+
     
-
-y_test = np.concatenate(y_test)
+y_test = np.concatenate(y_test, axis=0)
 pd.DataFrame(y_test).to_csv(path+"/y_test.csv", index=False)
 
 for key in y_predict:
@@ -158,22 +200,63 @@ for key in y_predict:
 with open(path+"/results.pkl", 'wb') as f:
     pickle.dump(y_predict, f)
 
+print("\ntraining completed.")
 
 #%% evalutaion
-
+print("\ncomputing scores...")
 # let's compare models based on several scores
-# scores={}
-# for key in y_predict:
-#     scores[key] = scoring_rules.get_all_scores_sample(y_test, y_predict[key], return_single_scores=True)
+scores={}
+for key in y_predict:
+    scores[key] = scoring_rules.all_scores_mv_sample(y_test, y_predict[key], 
+                                                      return_single_scores=True,
+                                                      CALIBRATION =True,
+                                                      MSE=True,
+                                                      MAE=True, 
+                                                      CRPS=True, 
+                                                      ES=True, 
+                                                      VS05=True, 
+                                                      VS1=True, 
+                                                      CES=False, 
+                                                      CVS05=False, 
+                                                      CVS1=False)
+### save results ###
+with open(path+"/score_series.pkl", 'wb') as f:
+    pickle.dump(scores, f)
     
-    
-# mean_scores = pd.DataFrame(scores).T
-# print(scores)
+mean_scores=pd.DataFrame()
+for mdl_key in scores:
+    for score_key in scores[mdl_key]:
+        mean_scores.loc[mdl_key, score_key] = np.mean(scores[mdl_key][score_key])
+print(mean_scores)
 
-# let's assess significance of score differences via DM test and plot the results
-# es_series={}
-# for key in y_predict:
-#     es_series[key] = scoring_rules.es_sample(y_test, y_predict[key][:,:,0:500], return_single_scores=True)
+### save results ###
+with open(path+"/scores_mean.pkl", 'wb') as f:
+    pickle.dump(mean_scores, f)
 
-# dm_results_matrix = scoring_rules.dm_test_matrix(es_series)
-# visualization.plot_dm_test_matrix(dm_results_matrix)
+print("\nAll done.")
+
+
+# # let's assess significance of score differences via DM test and plot the results
+# dm_test_results={}
+# score_names = list(scores[list(y_predict.keys())[0]].keys())
+# for score_key in score_names:
+#     if score_key != "CAL":
+#         score_series={}
+#         for mdl_key in scores:
+#             score_series[mdl_key] = scores[mdl_key][score_key]
+#         dm_test_results[score_key] = scoring_rules.dm_test_matrix(score_series)
+#         #visualization.plot_dm_test_matrix(dm_test_results[score_key], title=score_key)
+
+# ### save results ###
+# with open(path+"/dm_tests.pkl", 'wb') as f:
+#     pickle.dump(dm_test_results, f)
+
+
+
+from sklearn.model_selection import ParameterGrid
+dgr_config_var={"conditioning": ["concatenate", "FiLM"], "loss": ["ES", "VS"], "n_samples": [1]}
+list(ParameterGrid(dgr_config_var))
+
+for i in ParameterGrid(param_config_var):
+    print(i)
+    #print(list(i.values()))
