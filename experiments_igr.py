@@ -85,7 +85,7 @@ model_configs["GAN"] = {"class": GAN,
                         }
 
 #%%
-path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian", "r-vine"],  name="wind_spatial")
+path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian", "r-vine"],  name="25-1-1_rolling_window")
 
 #%%
 analyze_experiment(path_to_results)
