@@ -1,6 +1,7 @@
 import numpy as np
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+import pathlib
 import tensorflow as tf
 import pandas as pd
 from sklearn.model_selection import TimeSeriesSplit
@@ -17,25 +18,13 @@ def run_experiment(data_set_config,
                    model_configs, 
                    copulas = ["independence", "gaussian", "r-vine"], 
                    path=None, 
-                   name=None, # name for folder were we stor experiemnt
-                #    losses={"taus": [0.05, 0.2, 0.8, 0.95],
-                #             "CALIBRATION": True,
-                #             "MSE": True,
-                #             "MAE": True,
-                #             "PB": True,
-                #             "CRPS": True, 
-                #             "ES": True, 
-                #             "VS05": True, 
-                #             "VS1": True, 
-                #             "CES": False, 
-                #             "CVS05": False, 
-                #             "CVS1": False},
-                #    validation_loss="ES"
-                ):
+                   name=None):
     
     ### dir to save the results ###
     if path is None:
-        path = "results/"+str(data_set_config["name"])+"/"
+        path_to_datafolder = pathlib.Path(__file__).resolve().parent
+        path = os.path.join(path_to_datafolder, "results/"+str(data_set_config["name"])+"/")
+        #path = "results/"+str(data_set_config["name"])+"/"
         if name is None:
             path = path+datetime.now().strftime("%Y%m%d%H%M")
         else:
@@ -170,7 +159,7 @@ def run_experiment(data_set_config,
             for mdl_cnfg in v:
                 y_predict_tmp[mdl_nm][mdl_cnfg] = np.concatenate(y_predict[mdl_nm][mdl_cnfg], axis=0)
     
-        with open(path+"/results.pkl", 'wb') as f:
+        with open(path+"/y_predict.pkl", 'wb') as f:
              pickle.dump(y_predict_tmp, f)
         del y_predict_tmp
         
@@ -205,87 +194,21 @@ def run_experiment(data_set_config,
     with open(path+"/data_set_config.pkl", "wb") as f:
         pickle.dump(data_set_config, f)
     
-
-
-    # scores = {}
-    # for mdl_nm,v in y_predict.items():
-    #     scores[mdl_nm] = {}
-    #     for mdl_cnfg in v:
-    #         scores[mdl_nm][mdl_cnfg] = scoring_rules.all_scores_mv_sample(y_test, y_predict[mdl_nm][mdl_cnfg], 
-    #                                                                       return_single_scores=True,
-    #                                                                       **losses)
-            
-    # # per model type get best performing hyperparameters
-    # optimal_configs={}
-    # for mdl_nm in config_combinations:
-    #     loss={}
-    #     for mdl_cnfg in config_combinations[mdl_nm]:
-    #         loss[mdl_cnfg] = np.mean(scores[mdl_nm][mdl_cnfg][validation_loss])
-        
-    #     best_cnfg_id = min(loss, key=loss.get) # key smallest ES loss
-    #     optimal_configs[mdl_nm] = config_combinations[mdl_nm][best_cnfg_id]
-    
-    # #print(optimal_configs)
-    
-    # with open(path+"/optimal_configs.pkl", 'wb') as f:
-    #     pickle.dump(optimal_configs, f)
-            
-    # scores_flat = {}
-    # for mdl_nm in scores:
-    #     for mdl_id in scores[mdl_nm]:
-    #         scores_flat[mdl_nm+"---"+mdl_id] = scores[mdl_nm][mdl_id]
-    # scores = scores_flat
-
-    # y_predict_flat = {}
-    # for mdl_nm in y_predict:
-    #     for mdl_id in y_predict[mdl_nm]:
-    #         y_predict_flat[mdl_nm+"---"+mdl_id] = y_predict[mdl_nm][mdl_id]
-    # y_predict = y_predict_flat
-
-    
-    # ### save results ###
-    # with open(path+"/score_series.pkl", 'wb') as f:
-    #     pickle.dump(scores, f)
-
-    
-    # mean_scores=pd.DataFrame()
-    # for mdl_key in scores:
-    #     for score_key in scores[mdl_key]:
-    #         mean_scores.loc[mdl_key, score_key] = np.mean(scores[mdl_key][score_key])
-    # mean_scores.to_excel(path+"/mean_scores.xlsx")
-    
-    # # assess significance of score differences via DM test
-    # dm_test_results={}
-    # score_names = list(scores[list(y_predict.keys())[0]].keys())
-    # for score_key in score_names:
-    #     if score_key != "CAL":
-    #         score_series={}
-    #         for mdl_key in scores:
-    #             score_series[mdl_key] = scores[mdl_key][score_key]
-    #         dm_test_results[score_key] = scoring_rules.dm_test_matrix(score_series)
-    #         #visualization.plot_dm_test_matrix(dm_test_results[score_key], title=score_key)
-    
-    # ### save results ###
-    # with open(path+"/dm_test_results.pkl", 'wb') as f:
-    #     pickle.dump(dm_test_results, f)
-    
     print(f"\nexperiments completed. Results saved to: {path}.")
 
     return path
 
 
-# TODO: function to load results from function above 
 def load_results(path):
 
     with open(path+'/y_predict.pkl', 'rb') as h:
         y_predict = pickle.load(h)
     
-    y_test = pd.read_csv(path+'/y_test.csv').to_numpy()
+    y_test = pd.read_csv(path+'/y_test.csv', index_col=0).to_numpy()
 
     return y_test, y_predict
 
 
-#TODO: a function to analyze and visualize results of experiments
 def analyze_experiment(path,
                        losses={"taus": [0.05, 0.2, 0.8, 0.95],
                                 "CALIBRATION": True,
@@ -367,3 +290,6 @@ def analyze_experiment(path,
     ### save results ###
     with open(path+"/dm_test_results.pkl", 'wb') as f:
         pickle.dump(dm_test_results, f)
+
+    print(f"\nexperiment analyzed. Results saved to: {path}.")
+
