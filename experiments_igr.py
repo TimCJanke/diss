@@ -177,9 +177,17 @@ def run_experiment(data_set_config,
                     config_combinations[mdl_name][mdl_id] = config_tmp
          
         # save intermediate results
-        # pd.DataFrame(np.concatenate(y_test, axis=0), index=dates_test).to_csv(path+"/y_test.csv")
-        # with open(path+"/results.pkl", 'wb') as f:
-        #     pickle.dump({key: np.concatenate(value) for key, value in y_predict.items()}, f)
+        pd.DataFrame(np.concatenate(y_test, axis=0), index=dates_test).to_csv(path+"/y_test.csv")
+
+        y_predict_tmp={}
+        for mdl_nm,v in y_predict.items():
+            y_predict_tmp[mdl_nm] = {}
+            for mdl_cnfg in v:
+                y_predict_tmp[mdl_nm][mdl_cnfg] = np.concatenate(y_predict[mdl_nm][mdl_cnfg], axis=0)
+    
+        with open(path+"/results.pkl", 'wb') as f:
+             pickle.dump(y_predict_tmp, f)
+        del y_predict_tmp
         
         pbar.update()
     
@@ -222,7 +230,7 @@ def run_experiment(data_set_config,
         best_cnfg_id = min(loss, key=loss.get) # key smallest ES loss
         optimal_configs[mdl_nm] = config_combinations[mdl_nm][best_cnfg_id]
     
-    print(optimal_configs)
+    #print(optimal_configs)
     
     with open(path+"/optimal_configs.pkl", 'wb') as f:
         pickle.dump(optimal_configs, f)
@@ -249,7 +257,7 @@ def run_experiment(data_set_config,
     for mdl_key in scores:
         for score_key in scores[mdl_key]:
             mean_scores.loc[mdl_key, score_key] = np.mean(scores[mdl_key][score_key])
-    mean_scores.to_csv(path+"/mean_scores.csv")
+    mean_scores.to_excel(path+"/mean_scores.xlsx")
     
     # assess significance of score differences via DM test
     dm_test_results={}
@@ -274,17 +282,17 @@ if __name__ == "__main__":
 
     # data set
     data_set_config = {"name": "wind_spatial",
-                       "fetch_data":{"zones": [4,5,6,1,7,8],#list(np.arange(1,11)),
+                       "fetch_data":{"zones": list(np.arange(1,11)),
                                      "features": ['WE10', 'WE100', 'WD10', 'WD100', 'WD_difference', 'WS_ratio'],
                                      "hours": list(np.arange(0,24))},
                        "datetime_idx": None, #pd.date_range(start="2012/2/1 00:00", end="2012/5/1 23:00", freq='H'),               
-                       "n_total": 24*24*7,
-                       "n_train": 24*12*7,
-                       "n_val": 24*4*7,
-                       "n_test": 24*4*7,
-                       "n_samples_predict": 250,
+                       "n_total": 24*29*7,
+                       "n_train": 24*25*7,
+                       "n_val": 24*2*7,
+                       "n_test": 24*1*7,
+                       "n_samples_predict": 500,
                        "early_stopping": True,
-                       "epochs": 50,
+                       "epochs": 1000,
                        }
 
     # data_set_config = {"name": "wind_spatial",
@@ -305,10 +313,10 @@ if __name__ == "__main__":
     nn_base_config = {"n_layers": 3,
                     "n_neurons": 200,
                     "activation": "relu",
-                    #"output_activation": None,
+                    "output_activation": None,
                     "censored_left": 0.0, 
                     "censored_right": 1.0, 
-                    #"input_scaler": "Standard",
+                    "input_scaler": "Standard",
                     #"output_scaler": None
                     }
     
@@ -316,59 +324,54 @@ if __name__ == "__main__":
     model_configs={}
     model_configs["LogitN"] = {"class": PRM,
                             "config_fixed": {**nn_base_config, 
-                                             "distribution":"LogitNormal",
+                                             "distribution": "LogitNormal",
+                                             "output_scaler": None
                                              },
-                            "config_var": {"input_scaler": ["Standard", "MinMax"],
-                                           }
+                            "config_var": {}
                             }
 
     model_configs["Normal"] = {"class": PRM,
                             "config_fixed": {**nn_base_config, 
-                                             "distribution":"Normal"
+                                             "distribution": "Normal",
+                                             "output_scaler": "Standard",
                                              },
-                            "config_var": {"input_scaler": ["Standard", "MinMax"],
-                                           "output_scaler": [None, "Standard"]
-                                           }
+                            "config_var": {}
                             }
-        
-    model_configs["QR"] = {"class": QR,
-                            "config_fixed": {**nn_base_config, "taus": list(np.round(np.arange(0.025,1.0, 0.025), 4))},
-                            "config_var": {"input_scaler": ["Standard", "MinMax"],
-                                           "output_scaler": [None, "Standard"],
-                                           "output_activation": ["linear", "sigmoid"]
-                                           }
-                            }
-    
-    # model_configs["DGR"] = {"class": DGR,
-    #                         "config_fixed": {**nn_base_config, 
-    #                                         "n_samples_train": 10,
-    #                                         "n_samples_val": 200,
-    #                                         "dim_latent": 20
-    #                                         },
-    #                         "config_var": {"conditioning": ["concatenate", "FiLM"],
-    #                                        "input_scaler": ["Standard", "MinMax"],
-    #                                        "output_scaler": [None, "Standard"],
-    #                                        "output_activation": ["linear", "sigmoid"]
-    #                                        }
-    #                         }
-    
-    # model_configs["GAN"] = {"class": GAN,
-    #                         "config_fixed": {**nn_base_config, 
-    #                                         "n_samples_val": 200,
-    #                                         "dim_latent": 20,
-    #                                         #"optimizer": tf.keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.1),
-    #                                         "optimizer": "Adam",
-    #                                         #"optimizer_discriminator": tf.keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.1),
-    #                                         "label_smoothing": 0.1
-    #                                         },
-                            
-    #                         "config_var": {"conditioning": ["concatenate", "FiLM"],
-    #                                         "optimizer_kwargs": [{"beta_1": 0.0}, {"learning_rate": 0.0001}],
-    #                                         "optimizer_discriminator_kwargs": [{"beta_1": 0.0}, {"learning_rate": 0.0001}]}
-    #                         }
 
-    run_experiment(data_set_config, model_configs, copulas=["independence"],  name="cv_wind_spatial")
+
+    model_configs["QR"] = {"class": QR,
+                            "config_fixed": {**nn_base_config, 
+                                            "taus": list(np.round(np.arange(0.025,1.0, 0.025), 4)),
+                                            "output_scaler": "Standard"},
+                            "config_var": {}
+                            }
+
+
+    model_configs["DGR"] = {"class": DGR,
+                            "config_fixed": {**nn_base_config, 
+                                            "n_samples_train": 10,
+                                            "n_samples_val": 200,
+                                            "dim_latent": 20,
+                                            "output_scaler": "Standard"
+                                            },
+                            "config_var": {"conditioning": ["concatenate", "FiLM"]
+                                           }
+                            }
     
+    model_configs["GAN"] = {"class": GAN,
+                            "config_fixed": {**nn_base_config, 
+                                            "n_samples_val": 200,
+                                            "dim_latent": 20,
+                                            "output_scaler": "Standard",
+                                            "label_smoothing": 0.1,
+                                            "optimizer_kwargs": {"beta_1": 0.5, "learning_rate": 0.0001},
+                                            "optimizer_discriminator_kwargs": {"beta_1": 0.5, "learning_rate": 0.0001},
+                                            },
+                            
+                            "config_var": {"conditioning": ["concatenate", "FiLM"]}
+                            }
+
+    run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian", "r-vine"],  name="wind_spatial")
 
 # d = {}
 # y = {}
