@@ -293,3 +293,150 @@ def analyze_experiment(path,
 
     print(f"\nexperiment analyzed. Results saved to: {path}.")
 
+
+
+
+def timeseries_split_from_dates(date_train_start, 
+                          date_train_end, 
+                          date_test_end, 
+                          refit,
+                          freq,
+                          moving_window=True,
+                          max_trainset_length=None,
+                          gap=0):
+    """
+    Creates date based train-test splits.
+
+    Parameters
+    ----------
+    date_train_start : string
+        Date of first instance to be included in first training set, e.g. 2020/01/01 00:00.
+    date_train_end : string
+        Date of last instance to be included in first training set, e.g. 2020/12/31 23:00.
+    date_test_end : string
+        Date of last instance to be included in first test set, e.g. 2021/03/31 23:00.
+    refit : integer
+        Determines after how many periods a new train-test-split is created.
+    freq : string
+        Frequnecy of the time series, ‘W’, ‘D’, 'H', ‘T’, ‘S’, ‘L’, ‘U’, or ‘N’.
+        See https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
+    moving_window : boolen, optional
+        If moving window should be used. If False expanding window is used. The default is True.
+    max_trainset_length : int, optional
+        Maximum number of instances in the training set. If None is given, length of initial training period is used.
+        This parameter is ignored if expanding window is used, i.e. if moving_windo=False.
+        The default is None.
+    gap : bool, optional
+        Size of gap between last training dat and first test date. Useful if data from most recent days is not yet know at time of forecasting.
+        The default is 0.
+
+    Returns
+    -------
+    dates_train : list
+        Dates for training sets.
+    dates_test : list
+        Dates for test sets.
+
+    """
+    
+    # if moving window should be used and no max_trainset_length is given, set to length of initial train set length
+    if moving_window and max_trainset_length is None:
+        max_trainset_length = len(pd.date_range(start=date_train_start, end=date_train_end, freq=freq))
+    
+    # setting max_trainset_length to 0 results in expanding window
+    if not moving_window:
+        max_trainset_length = 0
+    
+    # initial train test split
+    train_start_tmp = pd.to_datetime(date_train_start)
+    train_end_tmp = pd.to_datetime(date_train_end)
+    test_start_tmp = train_end_tmp + pd.Timedelta(gap+1, unit=freq)
+    
+    dates_train = []
+    dates_test = []
+    for i in range(int(np.ceil(len(pd.date_range(start=test_start_tmp, end=date_test_end, freq=freq))/refit))):
+        
+        dates_train.append(pd.date_range(start=train_start_tmp, end=train_end_tmp, freq=freq)[-max_trainset_length:])
+        dates_test.append(pd.date_range(start=test_start_tmp, end=date_test_end, freq=freq)[0:refit])
+        
+        train_end_tmp = train_end_tmp + pd.Timedelta(refit, unit=freq)
+        test_start_tmp = train_end_tmp + pd.Timedelta(gap+1, unit=freq)
+        
+    return dates_train, dates_test
+
+
+
+def timeseries_split(idx,
+                     len_train,
+                     len_test=1, 
+                     step=None,
+                     moving_window=True,
+                     max_trainset_length=None,
+                     gap=0):
+    """
+    Creates date based train-test splits.
+
+    Parameters
+    ----------
+    idx : array or lis
+        List of indeces.
+    len_train : int
+        Number of samples in initial training set.
+    len_test : int
+        Number os samples in test set.
+    step : integer
+        Increment by how many steps the training and test sets are moved. The default is None.
+        If None is passed it is set to len_test+gap
+    moving_window : boolean, optional
+        If moving window should be used. If False expanding window is used. The default is True.
+    max_trainset_length : int, optional
+        Maximum number of instances in the training set. If None is given, length of initial training period is used.
+        This parameter is ignored if expanding window is used, i.e. if moving_window=False.
+        The default is None.
+    gap : bool, optional
+        Size of gap between last training dat and first test date. Useful if data from most recent time steps is not yet know at time of forecasting.
+        The default is 0.
+
+    Returns
+    -------
+    dates_train : list
+        Dates for training sets.
+    dates_test : list
+        Dates for test sets.
+
+    """
+    
+    # if moving window should be used and no max_trainset_length is given, set to length of initial train set length
+    if moving_window and max_trainset_length is None:
+        max_trainset_length = len_train    
+    
+    # setting max_trainset_length to 0 results in expanding window
+    if not moving_window:
+        max_trainset_length = 0
+        
+    if step is None:
+        step = len_test+gap
+    
+    # initial train test split
+    
+    idx_train = []
+    idx_test = []
+    
+    idx_train_tmp = np.arange(0, len_train, 1)[-max_trainset_length:]
+    idx_test_tmp = np.arange(len_train+gap, len_train+gap+len_test, 1)
+    
+    idx_train.append(idx[idx_train_tmp])
+    idx_test.append(idx[idx_test_tmp])
+    
+    while True:
+                
+        idx_train_tmp =  np.arange(0, len_train+step, 1)[-max_trainset_length:]
+        idx_test_tmp = idx_test_tmp + step
+        
+        if len(idx[idx_test_tmp])==0:
+            break
+          
+        idx_train.append(idx[idx_train_tmp])
+        idx_test.append(idx[idx_test_tmp])
+    
+    return idx_train, idx_test
