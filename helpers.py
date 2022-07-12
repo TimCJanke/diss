@@ -378,31 +378,29 @@ def timeseries_split(idx,
 
     Parameters
     ----------
-    idx : array or lis
+    idx : array or list
         List of indeces.
     len_train : int
         Number of samples in initial training set.
     len_test : int
         Number os samples in test set.
-    step : integer
+    step : int
         Increment by how many steps the training and test sets are moved. The default is None.
-        If None is passed it is set to len_test+gap
+        If None is passed it is set to len_test
     moving_window : boolean, optional
         If moving window should be used. If False expanding window is used. The default is True.
     max_trainset_length : int, optional
         Maximum number of instances in the training set. If None is given, length of initial training period is used.
         This parameter is ignored if expanding window is used, i.e. if moving_window=False.
         The default is None.
-    gap : bool, optional
+    gap : int, optional
         Size of gap between last training dat and first test date. Useful if data from most recent time steps is not yet know at time of forecasting.
         The default is 0.
 
     Returns
     -------
-    dates_train : list
-        Dates for training sets.
-    dates_test : list
-        Dates for test sets.
+    iterable
+        tuples of indeces for splitting idx in training set and test sets.
 
     """
     
@@ -415,28 +413,22 @@ def timeseries_split(idx,
         max_trainset_length = 0
         
     if step is None:
-        step = len_test+gap
-    
-    # initial train test split
-    
+        step = len_test
+        
     idx_train = []
     idx_test = []
-    
-    idx_train_tmp = np.arange(0, len_train, 1)[-max_trainset_length:]
-    idx_test_tmp = np.arange(len_train+gap, len_train+gap+len_test, 1)
-    
-    idx_train.append(idx[idx_train_tmp])
-    idx_test.append(idx[idx_test_tmp])
-    
+    i=0
     while True:
                 
-        idx_train_tmp =  np.arange(0, len_train+step, 1)[-max_trainset_length:]
-        idx_test_tmp = idx_test_tmp + step
+        idx_train_tmp =  np.arange(0, len_train+step*i, 1)[-max_trainset_length:]
+        idx_test_tmp = np.arange(len_train+gap+step*i, len_train+gap+len_test+step*i, 1)
+        idx_test_tmp = idx_test_tmp[idx_test_tmp<=idx[-1]]
         
-        if len(idx[idx_test_tmp])==0:
+        if len(idx_test_tmp) == 0:
             break
           
         idx_train.append(idx[idx_train_tmp])
         idx_test.append(idx[idx_test_tmp])
     
-    return idx_train, idx_test
+        i=i+1
+    return zip(idx_train, idx_test)
