@@ -1,4 +1,6 @@
 #%%
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 import numpy as np
 from mvpreg.mvpreg import DeepQuantileRegression as QR
 from mvpreg.mvpreg import DeepParametricRegression as PRM
@@ -86,6 +88,7 @@ model_configs["GAN"] = {"class": GAN,
 
 #%%
 path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian", "r-vine"],  name="25-1-1_rolling_window")
+
 
 #%%
 analyze_experiment(path_to_results)

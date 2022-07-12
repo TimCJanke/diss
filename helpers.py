@@ -67,15 +67,19 @@ def run_experiment(data_set_config,
     n_train_val = data_set_config["n_train"]+data_set_config["n_val"]
     n_test = data_set_config["n_test"]
     
-    ts_splitter = TimeSeriesSplit(int(np.floor((len(y)-n_train_val)/n_test)),
-                                  max_train_size=n_train_val,
-                                  test_size=n_test)
+    # save configs
+    with open(path+"/model_configs.pkl", "wb") as f:
+         pickle.dump(model_configs, f)
     
+    with open(path+"/data_set_config.pkl", "wb") as f:
+        pickle.dump(data_set_config, f)
     
     ### iterate over data set splits ###
     y_predict = {key: {} for key in model_configs.keys()}
-    pbar = tqdm(total=ts_splitter.get_n_splits())
-    for i, (idx_train_val, idx_test) in enumerate(ts_splitter.split(x)):
+    train_splits, test_splits = timeseries_split(idx=np.arange(0, len(x), 1), len_train=n_train_val, len_test=n_test)
+    pbar = tqdm(total=len(test_splits))
+    
+    for i, (idx_train_val, idx_test) in enumerate(zip(train_splits, test_splits)):
         
         # prepare inputs
         idx_train = idx_train_val[0:n_train]
@@ -165,7 +169,7 @@ def run_experiment(data_set_config,
         
         pbar.update()
     
-    pbar.close()        
+    pbar.close()
         
     ### save results ###
     
@@ -186,13 +190,6 @@ def run_experiment(data_set_config,
     # config_combinations is a nested dictionary with config_combinations["MODELNAME"] --> [ID]: configuration
     with open(path+"/config_combinations.pkl", "wb") as f:
         pickle.dump(config_combinations, f)
-
-    # save configs
-    with open(path+"/model_configs.pkl", "wb") as f:
-         pickle.dump(model_configs, f)
-    
-    with open(path+"/data_set_config.pkl", "wb") as f:
-        pickle.dump(data_set_config, f)
     
     print(f"\nexperiments completed. Results saved to: {path}.")
 
@@ -376,6 +373,15 @@ def timeseries_split(idx,
     """
     Creates date based train-test splits.
 
+    ### example:
+    X=np.random.normal(size=(329,4))
+    train_splits, test_splits = timeseries_split(np.arange(0,len(X),1), len_train=25, len_test=7)
+    for i, (idx_train, idx_test) in enumerate(zip(train_splits, test_splits)):
+        print(i)
+        print(f"train: {idx_train}")
+        print(f"test: {idx_test}\n\n")
+    ###
+
     Parameters
     ----------
     idx : array or list
@@ -399,8 +405,10 @@ def timeseries_split(idx,
 
     Returns
     -------
-    iterable
-        tuples of indeces for splitting idx in training set and test sets.
+    idx_train
+        lists of indeces for train splits
+    idx_test
+        list of indeces for test splits
 
     """
     
@@ -431,4 +439,4 @@ def timeseries_split(idx,
         idx_test.append(idx[idx_test_tmp])
     
         i=i+1
-    return zip(idx_train, idx_test)
+    return idx_train, idx_test
