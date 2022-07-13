@@ -90,16 +90,15 @@ if DATA_SET == "solar_spatial":
 if DATA_SET == "load":
     # data set
     data_set_config = {"name": "load",
-                        "fetch_data":{"zones": list(np.arange(1,4)),
-                                        "features": ['TEMP', 'DoW_DUMMY', 'MoY_DUMMY'],
-                                        "load_lags": [1,2,7],
-                                        "temp_lags": [1,2,7],
-                                        "hours": list(np.arange(0,24))},
+                        "fetch_data":{"features": ['TEMP', 'DoW_DUMMY', 'MoY_DUMMY'],
+                                      "load_lags": [1,2,7],
+                                      "temp_lags": [1,2,7],
+                                      "hours": list(np.arange(0,24))},
                         "datetime_idx": None, #pd.date_range(start="2012/2/1 00:00", end="2012/5/1 23:00", freq='H'),               
                         "n_total": None,
                         "n_train": 1454-28,
                         "n_val": 28,
-                        "n_test": 7,
+                        "n_test": 365,#7,
                         "n_samples_predict": 1000,
                         "early_stopping": True,
                         "epochs": 1000,
@@ -163,7 +162,8 @@ model_configs["GAN"] = {"class": GAN,
 
 
 #%%
-path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian", "r-vine"],  name="25-1-1_rolling_window")
+#path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian", "r-vine"],  name="25-1-1_rolling_window")
+path_to_results = run_experiment(data_set_config, model_configs, copulas=["gaussian"],  name="load_test")
 
 
 #%%
