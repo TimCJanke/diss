@@ -9,41 +9,114 @@ from mvpreg.mvpreg import AdversarialDGR as GAN
 
 from helpers import run_experiment, analyze_experiment
 
+DATA_SET = "load"
+
+if DATA_SET == "wind_spatial":
 # data set
-data_set_config = {"name": "wind_spatial",
-                    "fetch_data":{"zones": list(np.arange(1,11)),
-                                    "features": ['WE10', 'WE100', 'WD10', 'WD100', 'WD_difference', 'WS_ratio'],
-                                    "hours": list(np.arange(0,24))},
-                    "datetime_idx": None, #pd.date_range(start="2012/2/1 00:00", end="2012/5/1 23:00", freq='H'),               
-                    "n_total": None,
-                    "n_train": 24*7*25,
-                    "n_val": 24*7*1,
-                    "n_test": 24*7*1,
-                    "n_samples_predict": 1000,
-                    "early_stopping": True,
-                    "epochs": 1000,
+    data_set_config = {"name": "wind_spatial",
+                        "fetch_data":{"zones": list(np.arange(1,11)),
+                                        "features": ['WE10', 'WE100', 'WD10', 'WD100', 'WD_difference', 'WS_ratio'],
+                                        "hours": list(np.arange(0,24))},
+                        "datetime_idx": None, #pd.date_range(start="2012/2/1 00:00", end="2012/5/1 23:00", freq='H'),               
+                        "n_total": None,
+                        "n_train": 24*7*25,
+                        "n_val": 24*7*1,
+                        "n_test": 24*7*1,
+                        "n_samples_predict": 1000,
+                        "early_stopping": True,
+                        "epochs": 1000,
+                        }
+
+    # shared configs for core NN
+    nn_base_config = {"n_layers": 3,
+                    "n_neurons": 200,
+                    "activation": "relu",
+                    "output_activation": None,
+                    "censored_left": 0.0, 
+                    "censored_right": 1.0, 
+                    "input_scaler": "Standard",
+                    #"output_scaler": None
                     }
 
-# shared configs for core NN
-nn_base_config = {"n_layers": 3,
-                "n_neurons": 200,
-                "activation": "relu",
-                "output_activation": None,
-                "censored_left": 0.0, 
-                "censored_right": 1.0, 
-                "input_scaler": "Standard",
-                #"output_scaler": None
-                }
+    # configs for each model
+    model_configs={}
+    model_configs["LogitN"] = {"class": PRM,
+                            "config_fixed": {**nn_base_config, 
+                                                "distribution": "LogitNormal",
+                                                "output_scaler": None
+                                                },
+                            "config_var": {}
+                            }
 
-# configs for each model
-model_configs={}
-model_configs["LogitN"] = {"class": PRM,
-                        "config_fixed": {**nn_base_config, 
-                                            "distribution": "LogitNormal",
-                                            "output_scaler": None
-                                            },
-                        "config_var": {}
+
+
+if DATA_SET == "solar_spatial":
+    # data set
+    data_set_config = {"name": "solar_spatial",
+                        "fetch_data":{"zones": list(np.arange(1,4)),
+                                        "features": ['T', 'SSRD', 'RH', 'WS10'],
+                                        "hours": list(np.arange(6,20))},
+                        "datetime_idx": None, #pd.date_range(start="2012/2/1 00:00", end="2012/5/1 23:00", freq='H'),               
+                        "n_total": None,
+                        "n_train": 14*7*25,
+                        "n_val": 14*7*1,
+                        "n_test": 14*7*1,
+                        "n_samples_predict": 1000,
+                        "early_stopping": True,
+                        "epochs": 1000,
                         }
+
+    # shared configs for core NN
+    nn_base_config = {"n_layers": 3,
+                    "n_neurons": 200,
+                    "activation": "relu",
+                    "output_activation": None,
+                    "censored_left": 0.0, 
+                    "censored_right": 1.0, 
+                    "input_scaler": "Standard",
+                    }
+
+    # configs for each model
+    model_configs={}
+    model_configs["LogitN"] = {"class": PRM,
+                            "config_fixed": {**nn_base_config, 
+                                                "distribution": "LogitNormal",
+                                                "output_scaler": None
+                                                },
+                            "config_var": {}
+                            }
+
+
+if DATA_SET == "load":
+    # data set
+    data_set_config = {"name": "load",
+                        "fetch_data":{"zones": list(np.arange(1,4)),
+                                        "features": ['TEMP', 'DoW_DUMMY', 'MoY_DUMMY'],
+                                        "load_lags": [1,2,7],
+                                        "temp_lags": [1,2,7],
+                                        "hours": list(np.arange(0,24))},
+                        "datetime_idx": None, #pd.date_range(start="2012/2/1 00:00", end="2012/5/1 23:00", freq='H'),               
+                        "n_total": None,
+                        "n_train": 1454-28,
+                        "n_val": 28,
+                        "n_test": 7,
+                        "n_samples_predict": 1000,
+                        "early_stopping": True,
+                        "epochs": 1000,
+                        }
+
+    # shared configs for core NN
+    nn_base_config = {"n_layers": 3,
+                    "n_neurons": 200,
+                    "activation": "relu",
+                    "output_activation": None,
+                    "input_scaler": "Standard",
+                    }
+
+    # configs for each model
+    model_configs={}
+
+
 
 model_configs["Normal"] = {"class": PRM,
                         "config_fixed": {**nn_base_config, 
@@ -69,7 +142,8 @@ model_configs["DGR"] = {"class": DGR,
                                         "dim_latent": 20,
                                         "output_scaler": "Standard"
                                         },
-                        "config_var": {"conditioning": ["concatenate", "FiLM"]
+                        "config_var": {"conditioning": ["concatenate", "FiLM"],
+                                        "loss": ["ES", "VS"]
                                         }
                         }
 
@@ -85,6 +159,8 @@ model_configs["GAN"] = {"class": GAN,
                         
                         "config_var": {"conditioning": ["concatenate", "FiLM"]}
                         }
+
+
 
 #%%
 path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian", "r-vine"],  name="25-1-1_rolling_window")

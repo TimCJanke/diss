@@ -41,9 +41,36 @@ def run_experiment(data_set_config,
         dates = data["dates"]
         x = np.reshape(data["X"], (data["X"].shape[0], -1))
         y = data["y"]
+        
+    elif data_set_name == "solar_spatial":
+        data = data_utils.fetch_solar_spatial(**data_set_config["fetch_data"])
+        dates = data["dates"]
+        x = np.reshape(data["X"], (data["X"].shape[0], -1))
+        y = data["y"]
+    
+    elif data_set_name == "load":
+        data = data_utils.fetch_load(**data_set_config["fetch_data"])
+        dates = data["dates"]
+        x = np.reshape(data["X"], (data["X"].shape[0], -1))
+        y = data["y"]
+        
+        # we only need the dummy varaibles once:
+        feature_names = data["features"]
+        feature_list = feature_names*data["X"].shape[1]
+        
+        drops_DoW =  [i for i,s in enumerate(feature_list) if "DoW" in s]
+        drops_DoW = drops_DoW[int(len(drops_DoW)/data["X"].shape[1]):]
+        
+        drops_MoY = [i for i,s in enumerate(feature_list) if "MoY" in s]
+        drops_MoY = drops_MoY[int(len(drops_MoY)/data["X"].shape[1]):]
+        
+        drops=[*drops_DoW, *drops_MoY]
+        x = np.delete(x, drops, axis=1)
+    
     else:
         raise ValueError(f"Unknown data set: {data_set_name}")
     
+    del data
     
     ### prepare data set ###
     if data_set_config["datetime_idx"] is not None:
