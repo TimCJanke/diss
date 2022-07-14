@@ -27,7 +27,7 @@ else:
     elif data_set == "solar_spatial":
         n_train = 14*7*25
     elif data_set == "load":
-        n_train = 1454-28
+        n_train = 365*4-28-7
 
 if args.n_val:
     n_val = args.n_val
@@ -37,7 +37,7 @@ else:
     elif data_set == "solar_spatial":
         n_val = 14*7*1
     elif data_set == "load":
-        n_val = 28
+        n_val = 7*4
 
 if args.n_test:
     n_test = args.n_test
@@ -47,7 +47,7 @@ else:
     elif data_set == "solar_spatial":
         n_test = 14*7*1
     elif data_set == "load":
-        n_test = 28
+        n_test = 7*4
 
 if args.tag:
     tag = args.tag
