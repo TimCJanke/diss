@@ -1,17 +1,60 @@
 #%%
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+import argparse
 import numpy as np
 from mvpreg.mvpreg import DeepQuantileRegression as QR
 from mvpreg.mvpreg import DeepParametricRegression as PRM
 from mvpreg.mvpreg import ScoringRuleDGR as DGR
 from mvpreg.mvpreg import AdversarialDGR as GAN
-
 from helpers import run_experiment, analyze_experiment
 
-DATA_SET = "load"
+parser = argparse.ArgumentParser()
+parser.add_argument("--data_set", type=str, required=True, choices=["wind_spatial", "solar_spatial", "load"])
+parser.add_argument("--n_train", type=int, required=False)
+parser.add_argument("--n_val", type=int, required=False)
+parser.add_argument("--n_test", type=int, required=False)
+parser.add_argument("--tag", type=str, required=False)
+args = parser.parse_args()
 
-if DATA_SET == "wind_spatial":
+data_set = args.data_set
+
+if args.n_train:
+    n_train = args.n_train
+else:
+    if data_set == "wind_spatial":
+        n_train = 24*7*25
+    elif data_set == "solar_spatial":
+        n_train = 14*7*25
+    elif data_set == "load":
+        n_train = 1454-28
+
+if args.n_val:
+    n_val = args.n_val
+else:
+    if data_set == "wind_spatial":
+        n_val = 24*7*1
+    elif data_set == "solar_spatial":
+        n_val = 14*7*1
+    elif data_set == "load":
+        n_val = 28
+
+if args.n_test:
+    n_test = args.n_test
+else:
+    if data_set == "wind_spatial":
+        n_test = 24*7*1
+    elif data_set == "solar_spatial":
+        n_test = 14*7*1
+    elif data_set == "load":
+        n_test = 28
+
+if args.tag:
+    tag = args.tag
+else:
+    tag=None
+
+if data_set == "wind_spatial":
 # data set
     data_set_config = {"name": "wind_spatial",
                         "fetch_data":{"zones": list(np.arange(1,11)),
@@ -52,7 +95,7 @@ if DATA_SET == "wind_spatial":
 
 
 
-if DATA_SET == "solar_spatial":
+if data_set == "solar_spatial":
     # data set
     data_set_config = {"name": "solar_spatial",
                         "fetch_data":{"zones": list(np.arange(1,4)),
@@ -93,7 +136,7 @@ if DATA_SET == "solar_spatial":
                             }
 
 
-if DATA_SET == "load":
+if data_set == "load":
     # data set
     data_set_config = {"name": "load",
                         "fetch_data":{"features": ['TEMP', 'DoW_DUMMY', 'MoY_DUMMY'],
@@ -170,8 +213,7 @@ model_configs["GAN"] = {"class": GAN,
 
 
 #%%
-path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian", "r-vine"],  name="test")
-#path_to_results = run_experiment(data_set_config, model_configs, copulas=["gaussian"],  name="load_test")
+path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian", "r-vine"],  name=tag)
 
 #%%
 analyze_experiment(path_to_results)
