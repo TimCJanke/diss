@@ -213,7 +213,7 @@ model_configs["GAN"] = {"class": GAN,
 
 
 #%%
-path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian", "r-vine"],  name=tag)
+path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian"],  name=tag)
 
 #%%
 analyze_experiment(path_to_results)
