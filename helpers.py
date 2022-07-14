@@ -1,10 +1,9 @@
 import numpy as np
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 import pathlib
 import tensorflow as tf
 import pandas as pd
-from sklearn.model_selection import TimeSeriesSplit
 import pickle
 from datetime import datetime
 from tqdm import tqdm
@@ -117,7 +116,7 @@ def run_experiment(data_set_config,
                   "y_val": y[idx_val], 
                   "epochs": data_set_config["epochs"],
                   "early_stopping": data_set_config["early_stopping"],
-                  "patience": 20,
+                  "patience": data_set_config["patience"],
                   "plot_learning_curve": False}    
         predict_dict={"x": x[idx_test],"n_samples": data_set_config["n_samples_predict"]}
         
