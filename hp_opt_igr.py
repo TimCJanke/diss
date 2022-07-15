@@ -288,6 +288,6 @@ model_configs["GAN_FiLM"] = {"class": GAN,
 
 
 
-path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence"], move_testset_window=move_testset_window, name="hp_opt")
+path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence"], move_testset_window=move_testset_window, name=tag)
 
 analyze_experiment(path_to_results, get_best_hyperparams=True)
