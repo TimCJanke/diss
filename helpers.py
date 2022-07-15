@@ -112,8 +112,8 @@ def run_experiment(data_set_config,
         test_splits = test_splits[0:1]
     
     if isinstance(move_testset_window, int):
-        train_splits = train_splits[0:move_testset_window]
-        test_splits = test_splits[0:move_testset_window]   
+        train_splits = train_splits[0:move_testset_window+1]
+        test_splits = test_splits[0:move_testset_window+1]   
     
     pbar = tqdm(total=len(test_splits))
     for i, (idx_train_val, idx_test) in enumerate(zip(train_splits, test_splits)):
