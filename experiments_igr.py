@@ -67,7 +67,8 @@ if data_set == "wind_spatial":
                         "n_samples_predict": 1000,
                         "early_stopping": True,
                         "patience": 10,
-                        "epochs": 500
+                        "epochs": 500,
+                        "moving_window": True
                         }
     dim_latent = len(data_set_config["fetch_data"]["zones"])
     
@@ -109,6 +110,7 @@ if data_set == "solar_spatial":
                         "early_stopping": True,
                         "patience": 10,
                         "epochs": 500,
+                        "moving_window": True
                         }
     dim_latent = len(data_set_config["fetch_data"]["zones"])
 
@@ -151,6 +153,7 @@ if data_set == "load":
                         "early_stopping": True,
                         "patience": 10,
                         "epochs": 500,
+                        "moving_window": True
                         }
     dim_latent = len(data_set_config["fetch_data"]["hours"])
 

@@ -14,7 +14,11 @@ from mvpreg.mvpreg.evaluation import scoring_rules
 
 def run_experiment(data_set_config, 
                    model_configs, 
-                   copulas = ["independence", "gaussian", "r-vine"], 
+                   move_testset_window=True,
+                   # if False we will only use the single initial test set,
+                   # if True we will roll forward test set until data is exhausted
+                   # if int will move the window as much times
+                   copulas = ["independence", "gaussian"], # choices are ["independence", "gaussian", "r-vine"]
                    path=None, 
                    name=None):
     
@@ -101,9 +105,17 @@ def run_experiment(data_set_config,
     
     ### iterate over data set splits ###
     y_predict = {key: {} for key in model_configs.keys()}
-    train_splits, test_splits = timeseries_split(idx=np.arange(0, len(x), 1), len_train=n_train_val, len_test=n_test)
-    pbar = tqdm(total=len(test_splits))
+    train_splits, test_splits = timeseries_split(idx=np.arange(0, len(x), 1), len_train=n_train_val, len_test=n_test, moving_window=data_set_config["moving_window"])
     
+    if move_testset_window is False:
+        train_splits = train_splits[0:1]
+        test_splits = test_splits[0:1]
+    
+    if isinstance(move_testset_window, int):
+        train_splits = train_splits[0:move_testset_window]
+        test_splits = test_splits[0:move_testset_window]   
+    
+    pbar = tqdm(total=len(test_splits))
     for i, (idx_train_val, idx_test) in enumerate(zip(train_splits, test_splits)):
         
         # prepare inputs
