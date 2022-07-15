@@ -66,7 +66,7 @@ if data_set == "wind_spatial":
                         "n_test": n_test,
                         "n_samples_predict": 1000,
                         "early_stopping": True,
-                        "patience": 10,
+                        "patience": 20,
                         "epochs": 500,
                         "moving_window": True
                         }
@@ -108,7 +108,7 @@ if data_set == "solar_spatial":
                         "n_test": n_test,
                         "n_samples_predict": 1000,
                         "early_stopping": True,
-                        "patience": 10,
+                        "patience": 20,
                         "epochs": 500,
                         "moving_window": True
                         }
@@ -151,7 +151,7 @@ if data_set == "load":
                         "n_test": n_test,
                         "n_samples_predict": 1000,
                         "early_stopping": True,
-                        "patience": 10,
+                        "patience": 20,
                         "epochs": 500,
                         "moving_window": True
                         }
