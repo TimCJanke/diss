@@ -193,16 +193,16 @@ if data_set == "load":
 #                         }
 
 
-model_configs["DGR_ES_concat"] = {"class": DGR,
-                            "config_fixed": {**nn_base_config, 
-                                            "n_samples_train": 10,
-                                            "n_samples_val": 100,
-                                            "output_scaler": "Standard",
-                                            "loss": "ES",
-                                            "conditioning": "concatenate"
-                                            },
-                            "config_var": {"dim_latent": [2, 3, 5, 10, 20]}
-                            }
+# model_configs["DGR_ES_concat"] = {"class": DGR,
+#                             "config_fixed": {**nn_base_config, 
+#                                             "n_samples_train": 10,
+#                                             "n_samples_val": 100,
+#                                             "output_scaler": "Standard",
+#                                             "loss": "ES",
+#                                             "conditioning": "concatenate"
+#                                             },
+#                             "config_var": {"dim_latent": [2, 3, 5, 9, 10, 11, 15, 20, 50]}
+#                             }
 
 
 model_configs["DGR_ES_FiLM"] = {"class": DGR,
@@ -213,7 +213,7 @@ model_configs["DGR_ES_FiLM"] = {"class": DGR,
                                                 "loss": "ES",
                                                 "conditioning": "FiLM"
                                                 },
-                                "config_var": {"dim_latent": [2, 3, 5, 10, 20]}
+                                "config_var": {"dim_latent": [2, 3, 5, 9, 10, 11, 15, 20, 50]}
                                 }
 
 # model_configs["DGR_VS_concat"] = {"class": DGR,
