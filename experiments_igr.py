@@ -205,8 +205,8 @@ model_configs["GAN"] = {"class": GAN,
                                         "dim_latent": dim_latent,
                                         "output_scaler": "Standard",
                                         "label_smoothing": 0.1,
-                                        "optimizer_kwargs": {"beta_1": 0.5, "learning_rate": 0.0001},
-                                        "optimizer_discriminator_kwargs": {"beta_1": 0.5, "learning_rate": 0.0001},
+                                        "optimizer_kwargs": {"beta_1": 0.0, "learning_rate": 0.0005},
+                                        "optimizer_discriminator_kwargs": {"beta_1": 0.0, "learning_rate": 0.0005},
                                         },
                         
                         "config_var": {"conditioning": ["concatenate", "FiLM"]}

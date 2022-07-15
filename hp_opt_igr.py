@@ -193,98 +193,98 @@ if data_set == "load":
 #                         }
 
 
-# model_configs["DGR_ES_concat"] = {"class": DGR,
-#                             "config_fixed": {**nn_base_config, 
-#                                             "n_samples_train": 10,
-#                                             "n_samples_val": 100,
-#                                             "output_scaler": "Standard",
-#                                             "loss": "ES",
-#                                             "conditioning": "concatenate"
-#                                             },
-#                             "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
-#                             }
+model_configs["DGR_ES_concat"] = {"class": DGR,
+                            "config_fixed": {**nn_base_config, 
+                                            "n_samples_train": 10,
+                                            "n_samples_val": 100,
+                                            "output_scaler": "Standard",
+                                            "loss": "ES",
+                                            "conditioning": "concatenate"
+                                            },
+                            "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
+                            }
 
 
-# model_configs["DGR_ES_FiLM"] = {"class": DGR,
-#                                 "config_fixed": {**nn_base_config, 
-#                                                 "n_samples_train": 10,
-#                                                 "n_samples_val": 100,
-#                                                 "output_scaler": "Standard",
-#                                                 "loss": "ES",
-#                                                 "conditioning": "FiLM"
-#                                                 },
-#                                 "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
-#                                 }
+model_configs["DGR_ES_FiLM"] = {"class": DGR,
+                                "config_fixed": {**nn_base_config, 
+                                                "n_samples_train": 10,
+                                                "n_samples_val": 100,
+                                                "output_scaler": "Standard",
+                                                "loss": "ES",
+                                                "conditioning": "FiLM"
+                                                },
+                                "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
+                                }
 
-# model_configs["DGR_VS_concat"] = {"class": DGR,
-#                             "config_fixed": {**nn_base_config, 
-#                                             "n_samples_train": 10,
-#                                             "n_samples_val": 100,
-#                                             "output_scaler": "Standard",
-#                                             "loss": "VS",
-#                                             "conditioning": "concatenate"
-#                                             },
-#                             "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
-#                             }
+model_configs["DGR_VS_concat"] = {"class": DGR,
+                            "config_fixed": {**nn_base_config, 
+                                            "n_samples_train": 10,
+                                            "n_samples_val": 100,
+                                            "output_scaler": "Standard",
+                                            "loss": "VS",
+                                            "conditioning": "concatenate"
+                                            },
+                            "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
+                            }
 
-# model_configs["DGR_VS_FiLM"] = {"class": DGR,
-#                             "config_fixed": {**nn_base_config, 
-#                                             "n_samples_train": 10,
-#                                             "n_samples_val": 100,
-#                                             "output_scaler": "Standard",
-#                                             "loss": "VS",
-#                                             "conditioning": "FiLM"
-#                                             },
-#                             "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
-#                             }
+model_configs["DGR_VS_FiLM"] = {"class": DGR,
+                            "config_fixed": {**nn_base_config, 
+                                            "n_samples_train": 10,
+                                            "n_samples_val": 100,
+                                            "output_scaler": "Standard",
+                                            "loss": "VS",
+                                            "conditioning": "FiLM"
+                                            },
+                            "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
+                            }
 
-model_configs["GAN_concat"] = {"class": GAN,
-                        "config_fixed": {**nn_base_config, 
-                                        "n_samples_val": 100,
-                                        "dim_latent": dim_latent,
-                                        "output_scaler": "Standard",
-                                        "conditioning": "concatenate",
-                                        "label_smoothing": 0.1,
-                                        },
+# model_configs["GAN_concat"] = {"class": GAN,
+#                         "config_fixed": {**nn_base_config, 
+#                                         "n_samples_val": 100,
+#                                         "dim_latent": dim_latent,
+#                                         "output_scaler": "Standard",
+#                                         "conditioning": "concatenate",
+#                                         "label_smoothing": 0.1,
+#                                         },
                         
-                        "config_var": {"optimizer_kwargs": [{"beta_1": 0.0, "learning_rate": 0.0001},
-                                                            {"beta_1": 0.5, "learning_rate": 0.0001},
-                                                            {"beta_1": 0.9, "learning_rate": 0.0001},
-                                                            {"beta_1": 0.0, "learning_rate": 0.0005},
-                                                            {"beta_1": 0.5, "learning_rate": 0.0005},
-                                                            {"beta_1": 0.9, "learning_rate": 0.0005}],
-                                        "optimizer_discriminator_kwargs": [{"beta_1": 0.0, "learning_rate": 0.0001},
-                                                                            {"beta_1": 0.5, "learning_rate": 0.0001},
-                                                                            {"beta_1": 0.9, "learning_rate": 0.0001},
-                                                                            {"beta_1": 0.0, "learning_rate": 0.0005},
-                                                                            {"beta_1": 0.5, "learning_rate": 0.0005},
-                                                                            {"beta_1": 0.9, "learning_rate": 0.0005}]
-                                        }
-                        }
+#                         "config_var": {"optimizer_kwargs": [{"beta_1": 0.0, "learning_rate": 0.0001},
+#                                                             {"beta_1": 0.5, "learning_rate": 0.0001},
+#                                                             {"beta_1": 0.9, "learning_rate": 0.0001},
+#                                                             {"beta_1": 0.0, "learning_rate": 0.0005},
+#                                                             {"beta_1": 0.5, "learning_rate": 0.0005},
+#                                                             {"beta_1": 0.9, "learning_rate": 0.0005}],
+#                                         "optimizer_discriminator_kwargs": [{"beta_1": 0.0, "learning_rate": 0.0001},
+#                                                                             {"beta_1": 0.5, "learning_rate": 0.0001},
+#                                                                             {"beta_1": 0.9, "learning_rate": 0.0001},
+#                                                                             {"beta_1": 0.0, "learning_rate": 0.0005},
+#                                                                             {"beta_1": 0.5, "learning_rate": 0.0005},
+#                                                                             {"beta_1": 0.9, "learning_rate": 0.0005}]
+#                                         }
+#                         }
 
-model_configs["GAN_FiLM"] = {"class": GAN,
-                        "config_fixed": {**nn_base_config, 
-                                        "n_samples_val": 100,
-                                        "dim_latent": dim_latent,
-                                        "output_scaler": "Standard",
-                                        "conditioning": "FiLM",
-                                        "label_smoothing": 0.1,
-                                        },
+# model_configs["GAN_FiLM"] = {"class": GAN,
+#                         "config_fixed": {**nn_base_config, 
+#                                         "n_samples_val": 100,
+#                                         "dim_latent": dim_latent,
+#                                         "output_scaler": "Standard",
+#                                         "conditioning": "FiLM",
+#                                         "label_smoothing": 0.1,
+#                                         },
                         
-                        "config_var": {"optimizer_kwargs": [{"beta_1": 0.0, "learning_rate": 0.0001},
-                                                            {"beta_1": 0.5, "learning_rate": 0.0001},
-                                                            {"beta_1": 0.9, "learning_rate": 0.0001},
-                                                            {"beta_1": 0.0, "learning_rate": 0.0005},
-                                                            {"beta_1": 0.5, "learning_rate": 0.0005},
-                                                            {"beta_1": 0.9, "learning_rate": 0.0005}],
-                                        "optimizer_discriminator_kwargs": [{"beta_1": 0.0, "learning_rate": 0.0001},
-                                                                            {"beta_1": 0.5, "learning_rate": 0.0001},
-                                                                            {"beta_1": 0.9, "learning_rate": 0.0001},
-                                                                            {"beta_1": 0.0, "learning_rate": 0.0005},
-                                                                            {"beta_1": 0.5, "learning_rate": 0.0005},
-                                                                            {"beta_1": 0.9, "learning_rate": 0.0005}]
-                                        }
-                        }
+#                         "config_var": {"optimizer_kwargs": [{"beta_1": 0.0, "learning_rate": 0.0001},
+#                                                             {"beta_1": 0.5, "learning_rate": 0.0001},
+#                                                             {"beta_1": 0.9, "learning_rate": 0.0001},
+#                                                             {"beta_1": 0.0, "learning_rate": 0.0005},
+#                                                             {"beta_1": 0.5, "learning_rate": 0.0005},
+#                                                             {"beta_1": 0.9, "learning_rate": 0.0005}],
+#                                         "optimizer_discriminator_kwargs": [{"beta_1": 0.0, "learning_rate": 0.0001},
+#                                                                             {"beta_1": 0.5, "learning_rate": 0.0001},
+#                                                                             {"beta_1": 0.9, "learning_rate": 0.0001},
+#                                                                             {"beta_1": 0.0, "learning_rate": 0.0005},
+#                                                                             {"beta_1": 0.5, "learning_rate": 0.0005},
+#                                                                             {"beta_1": 0.9, "learning_rate": 0.0005}]
+#                                         }
+#                         }
 
 
 
