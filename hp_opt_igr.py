@@ -193,50 +193,50 @@ if data_set == "load":
 #                         }
 
 
-model_configs["DGR_ES_concat"] = {"class": DGR,
-                            "config_fixed": {**nn_base_config, 
-                                            "n_samples_train": 10,
-                                            "n_samples_val": 100,
-                                            "output_scaler": "Standard",
-                                            "loss": "ES",
-                                            "conditioning": "concatenate"
-                                            },
-                            "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
-                            }
+# model_configs["DGR_ES_concat"] = {"class": DGR,
+#                             "config_fixed": {**nn_base_config, 
+#                                             "n_samples_train": 10,
+#                                             "n_samples_val": 100,
+#                                             "output_scaler": "Standard",
+#                                             "loss": "ES",
+#                                             "conditioning": "concatenate"
+#                                             },
+#                             "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
+#                             }
 
 
-model_configs["DGR_ES_FiLM"] = {"class": DGR,
-                                "config_fixed": {**nn_base_config, 
-                                                "n_samples_train": 10,
-                                                "n_samples_val": 100,
-                                                "output_scaler": "Standard",
-                                                "loss": "ES",
-                                                "conditioning": "FiLM"
-                                                },
-                                "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
-                                }
+# model_configs["DGR_ES_FiLM"] = {"class": DGR,
+#                                 "config_fixed": {**nn_base_config, 
+#                                                 "n_samples_train": 10,
+#                                                 "n_samples_val": 100,
+#                                                 "output_scaler": "Standard",
+#                                                 "loss": "ES",
+#                                                 "conditioning": "FiLM"
+#                                                 },
+#                                 "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
+#                                 }
 
-model_configs["DGR_VS_concat"] = {"class": DGR,
-                            "config_fixed": {**nn_base_config, 
-                                            "n_samples_train": 10,
-                                            "n_samples_val": 100,
-                                            "output_scaler": "Standard",
-                                            "loss": "VS",
-                                            "conditioning": "concatenate"
-                                            },
-                            "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
-                            }
+# model_configs["DGR_VS_concat"] = {"class": DGR,
+#                             "config_fixed": {**nn_base_config, 
+#                                             "n_samples_train": 10,
+#                                             "n_samples_val": 100,
+#                                             "output_scaler": "Standard",
+#                                             "loss": "VS",
+#                                             "conditioning": "concatenate"
+#                                             },
+#                             "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
+#                             }
 
-model_configs["DGR_VS_FiLM"] = {"class": DGR,
-                            "config_fixed": {**nn_base_config, 
-                                            "n_samples_train": 10,
-                                            "n_samples_val": 100,
-                                            "output_scaler": "Standard",
-                                            "loss": "VS",
-                                            "conditioning": "FiLM"
-                                            },
-                            "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
-                            }
+# model_configs["DGR_VS_FiLM"] = {"class": DGR,
+#                             "config_fixed": {**nn_base_config, 
+#                                             "n_samples_train": 10,
+#                                             "n_samples_val": 100,
+#                                             "output_scaler": "Standard",
+#                                             "loss": "VS",
+#                                             "conditioning": "FiLM"
+#                                             },
+#                             "config_var": {"dim_latent": [2, 5, 10, 20, 50, 100]}
+#                             }
 
 model_configs["GAN_concat"] = {"class": GAN,
                         "config_fixed": {**nn_base_config, 
