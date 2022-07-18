@@ -87,16 +87,19 @@ if data_set == "wind_spatial":
                     "censored_right": 1.0, 
                     "input_scaler": "Standard",
                     }
-
+    for k in ("n_layers", "n_neurons", "activation"):
+        nn_base_config.pop(k, None)
     # configs for each model
     model_configs={}
-    # model_configs["LogitN"] = {"class": PRM,
-    #                         "config_fixed": {**nn_base_config, 
-    #                                             "distribution": "LogitNormal",
-    #                                             "output_scaler": None
-    #                                             },
-    #                         "config_var": {}
-    #                         }
+    model_configs["LogitN"] = {"class": PRM,
+                            "config_fixed": {**nn_base_config, 
+                                                "distribution": "LogitNormal",
+                                                "output_scaler": None
+                                                },
+                        "config_var": {"n_layers": [2,3],
+                                        "n_neurons": [100,200],
+                                        "activation": ["elu", "relu"]}
+                            }
 
 
 
@@ -185,12 +188,14 @@ if data_set == "load":
     #                         }
 
 
-# model_configs["QR"] = {"class": QR,
-#                         "config_fixed": {**nn_base_config, 
-#                                         "taus": list(np.round(np.arange(0.025,1.0, 0.025), 4)),
-#                                         "output_scaler": "Standard"},
-#                         "config_var": {}
-#                         }
+model_configs["QR"] = {"class": QR,
+                        "config_fixed": {**nn_base_config, 
+                                        "taus": list(np.round(np.arange(0.025,1.0, 0.025), 4)),
+                                        "output_scaler": "Standard"},
+                        "config_var": {"n_layers": [2,3],
+                                        "n_neurons": [100,200],
+                                        "activation": ["elu", "relu"]}
+                        }
 
 
 # model_configs["DGR_ES_concat"] = {"class": DGR,
@@ -204,8 +209,33 @@ if data_set == "load":
 #                             "config_var": {"dim_latent": [2, 3, 5, 9, 10, 11, 15, 20, 50]}
 #                             }
 
-for k in ("n_layers", "n_neurons", "activation"):
-    nn_base_config.pop(k, None)
+# model_configs["DGR_ES_concat"] = {"class": DGR,
+#                             "config_fixed": {**nn_base_config, 
+#                                             "n_samples_train": 10,
+#                                             "n_samples_val": 100,
+#                                             "output_scaler": "Standard",
+#                                             "loss": "ES",
+#                                             "conditioning": "concatenate"
+#                                             },
+#                             "config_var": {"dim_latent": [2, 3, 5, 9, 10, 11, 15, 20, 50]}
+#                             }
+
+    
+    
+model_configs["DGR_ES_concat"] = {"class": DGR,
+                                "config_fixed": {**nn_base_config, 
+                                                "n_samples_train": 10,
+                                                "n_samples_val": 100,
+                                                "output_scaler": "Standard",
+                                                "loss": "ES",
+                                                "conditioning": "concatenate",
+                                                "dim_latent": dim_latent
+                                                },
+                                "config_var": {"n_layers": [2,3],
+                                                "n_neurons": [100,200],
+                                                "activation": ["elu", "relu"]}
+                                }
+    
 model_configs["DGR_ES_FiLM"] = {"class": DGR,
                                 "config_fixed": {**nn_base_config, 
                                                 "n_samples_train": 10,
@@ -215,8 +245,8 @@ model_configs["DGR_ES_FiLM"] = {"class": DGR,
                                                 "conditioning": "FiLM",
                                                 "dim_latent": dim_latent
                                                 },
-                                "config_var": {"n_layers": [1,2,3,4],
-                                                "n_neurons": [25,50,100,200,500],
+                                "config_var": {"n_layers": [2,3],
+                                                "n_neurons": [100,200],
                                                 "activation": ["elu", "relu"]}
                                 }
 
