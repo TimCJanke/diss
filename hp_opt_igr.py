@@ -204,16 +204,20 @@ if data_set == "load":
 #                             "config_var": {"dim_latent": [2, 3, 5, 9, 10, 11, 15, 20, 50]}
 #                             }
 
-
+for k in ("n_layers", "n_neurons", "activation"):
+    nn_base_config.pop(k, None)
 model_configs["DGR_ES_FiLM"] = {"class": DGR,
                                 "config_fixed": {**nn_base_config, 
                                                 "n_samples_train": 10,
                                                 "n_samples_val": 100,
                                                 "output_scaler": "Standard",
                                                 "loss": "ES",
-                                                "conditioning": "FiLM"
+                                                "conditioning": "FiLM",
+                                                "dim_latent": dim_latent
                                                 },
-                                "config_var": {"dim_latent": [2, 3, 5, 9, 10, 11, 15, 20, 50]}
+                                "config_var": {"n_layers": [1,2,3,4],
+                                                "n_neurons": [25,50,100,200,500],
+                                                "activation": ["elu", "relu"]}
                                 }
 
 # model_configs["DGR_VS_concat"] = {"class": DGR,
