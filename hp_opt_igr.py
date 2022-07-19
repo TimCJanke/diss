@@ -81,7 +81,7 @@ if data_set == "wind_spatial":
     # shared configs for core NN
     nn_base_config = {"n_layers": 3,
                     "n_neurons": 200,
-                    #"activation": "elu",
+                    "activation": "elu",
                     "output_activation": None,
                     "censored_left": 0.0, 
                     "censored_right": 1.0, 
@@ -90,13 +90,13 @@ if data_set == "wind_spatial":
         
     # configs for each model
     model_configs={}
-    model_configs["LogitN"] = {"class": PRM,
-                            "config_fixed": {**nn_base_config, 
-                                                "distribution": "LogitNormal",
-                                                "output_scaler": None
-                                                },
-                        "config_var": {"activation": ["elu", "relu"]}
-                            }
+    # model_configs["LogitN"] = {"class": PRM,
+    #                         "config_fixed": {**nn_base_config, 
+    #                                             "distribution": "LogitNormal",
+    #                                             "output_scaler": None
+    #                                             },
+    #                     "config_var": {"activation": ["elu", "relu"]}
+    #                         }
 
 
 
@@ -185,12 +185,12 @@ if data_set == "load":
     #                         }
 
 
-model_configs["QR"] = {"class": QR,
-                        "config_fixed": {**nn_base_config, 
-                                        "taus": list(np.round(np.arange(0.025,1.0, 0.025), 4)),
-                                        "output_scaler": "Standard"},
-                        "config_var": {"activation": ["elu", "relu"]}
-                        }
+# model_configs["QR"] = {"class": QR,
+#                         "config_fixed": {**nn_base_config, 
+#                                         "taus": list(np.round(np.arange(0.025,1.0, 0.025), 4)),
+#                                         "output_scaler": "Standard"},
+#                         "config_var": {"activation": ["elu", "relu"]}
+#                         }
 
 
 # model_configs["DGR_ES_concat"] = {"class": DGR,
@@ -240,9 +240,8 @@ model_configs["DGR_ES_FiLM"] = {"class": DGR,
                                                 "conditioning": "FiLM",
                                                 "dim_latent": dim_latent
                                                 },
-                                "config_var": {"activation": ["elu", "relu"],
-                                               "n_samples_val": [100, 200],
-                                               "n_samples_train": [10, 50]}
+                                "config_var": {"n_samples_val": [10, 50, 100, 200, 500],
+                                               "n_samples_train": [5, 10, 50, 100]}
                                 }
 
 # model_configs["DGR_VS_concat"] = {"class": DGR,
