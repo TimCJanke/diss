@@ -13,6 +13,7 @@ parser.add_argument("--data_set", type=str, required=True, choices=["wind_spatia
 parser.add_argument("--n_train", type=int, required=False)
 parser.add_argument("--n_val", type=int, required=False)
 parser.add_argument("--n_test", type=int, required=False)
+parser.add_argument("--move_testset_window", type=int, required=False)
 parser.add_argument("--tag", type=str, required=False)
 args = parser.parse_args()
 
@@ -47,6 +48,11 @@ else:
         n_test = 14*7*1
     elif data_set == "load":
         n_test = 7*4
+
+if args.move_testset_window:
+    move_testset_window = args.move_testset_window
+else:
+    move_testset_window = True
 
 if args.tag:
     tag = args.tag
@@ -214,6 +220,6 @@ model_configs["GAN"] = {"class": GAN,
 
 
 
-path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian"],  name=tag)
+path_to_results = run_experiment(data_set_config, model_configs, copulas=["independence", "gaussian"], move_testset_window=move_testset_window, name=tag)
 
 analyze_experiment(path_to_results)
