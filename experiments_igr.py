@@ -75,7 +75,7 @@ if data_set == "wind_spatial":
     # shared configs for core NN
     nn_base_config = {"n_layers": 3,
                     "n_neurons": 200,
-                    "activation": "relu",
+                    "activation": "elu",
                     "output_activation": None,
                     "censored_left": 0.0, 
                     "censored_right": 1.0, 
@@ -117,7 +117,7 @@ if data_set == "solar_spatial":
     # shared configs for core NN
     nn_base_config = {"n_layers": 3,
                     "n_neurons": 200,
-                    "activation": "relu",
+                    "activation": "elu",
                     "output_activation": None,
                     "censored_left": 0.0, 
                     "censored_right": 1.0, 
@@ -160,7 +160,7 @@ if data_set == "load":
     # shared configs for core NN
     nn_base_config = {"n_layers": 3,
                     "n_neurons": 200,
-                    "activation": "relu",
+                    "activation": "elu",
                     "output_activation": None,
                     "input_scaler": "Standard",
                     }
