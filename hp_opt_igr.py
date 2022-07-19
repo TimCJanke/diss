@@ -81,14 +81,13 @@ if data_set == "wind_spatial":
     # shared configs for core NN
     nn_base_config = {"n_layers": 3,
                     "n_neurons": 200,
-                    "activation": "relu",
+                    #"activation": "elu",
                     "output_activation": None,
                     "censored_left": 0.0, 
                     "censored_right": 1.0, 
                     "input_scaler": "Standard",
                     }
-    for k in ("n_layers", "n_neurons", "activation"):
-        nn_base_config.pop(k, None)
+        
     # configs for each model
     model_configs={}
     model_configs["LogitN"] = {"class": PRM,
@@ -96,9 +95,7 @@ if data_set == "wind_spatial":
                                                 "distribution": "LogitNormal",
                                                 "output_scaler": None
                                                 },
-                        "config_var": {"n_layers": [2,3],
-                                        "n_neurons": [100,200],
-                                        "activation": ["elu", "relu"]}
+                        "config_var": {"activation": ["elu", "relu"]}
                             }
 
 
@@ -126,7 +123,7 @@ if data_set == "solar_spatial":
     # shared configs for core NN
     nn_base_config = {"n_layers": 3,
                     "n_neurons": 200,
-                    "activation": "relu",
+                    "activation": "elu",
                     "output_activation": None,
                     "censored_left": 0.0, 
                     "censored_right": 1.0, 
@@ -169,7 +166,7 @@ if data_set == "load":
     # shared configs for core NN
     nn_base_config = {"n_layers": 3,
                     "n_neurons": 200,
-                    "activation": "relu",
+                    "activation": "elu",
                     "output_activation": None,
                     "input_scaler": "Standard",
                     }
@@ -192,9 +189,7 @@ model_configs["QR"] = {"class": QR,
                         "config_fixed": {**nn_base_config, 
                                         "taus": list(np.round(np.arange(0.025,1.0, 0.025), 4)),
                                         "output_scaler": "Standard"},
-                        "config_var": {"n_layers": [2,3],
-                                        "n_neurons": [100,200],
-                                        "activation": ["elu", "relu"]}
+                        "config_var": {"activation": ["elu", "relu"]}
                         }
 
 
@@ -222,32 +217,32 @@ model_configs["QR"] = {"class": QR,
 
     
     
-model_configs["DGR_ES_concat"] = {"class": DGR,
-                                "config_fixed": {**nn_base_config, 
-                                                "n_samples_train": 10,
-                                                "n_samples_val": 100,
-                                                "output_scaler": "Standard",
-                                                "loss": "ES",
-                                                "conditioning": "concatenate",
-                                                "dim_latent": dim_latent
-                                                },
-                                "config_var": {"n_layers": [2,3],
-                                                "n_neurons": [100,200],
-                                                "activation": ["elu", "relu"]}
-                                }
+# model_configs["DGR_ES_concat"] = {"class": DGR,
+#                                 "config_fixed": {**nn_base_config, 
+#                                                 "n_samples_train": 10,
+#                                                 "n_samples_val": 100,
+#                                                 "output_scaler": "Standard",
+#                                                 "loss": "ES",
+#                                                 "conditioning": "concatenate",
+#                                                 "dim_latent": dim_latent
+#                                                 },
+#                                 "config_var": {"n_layers": [2,3],
+#                                                 "n_neurons": [100,200],
+#                                                 "activation": ["elu", "relu"]}
+#                                 }
     
 model_configs["DGR_ES_FiLM"] = {"class": DGR,
                                 "config_fixed": {**nn_base_config, 
-                                                "n_samples_train": 10,
-                                                "n_samples_val": 100,
+                                                #"n_samples_train": 10,
+                                                #"n_samples_val": 100,
                                                 "output_scaler": "Standard",
                                                 "loss": "ES",
                                                 "conditioning": "FiLM",
                                                 "dim_latent": dim_latent
                                                 },
-                                "config_var": {"n_layers": [2,3],
-                                                "n_neurons": [100,200],
-                                                "activation": ["elu", "relu"]}
+                                "config_var": {"activation": ["elu", "relu"],
+                                               "n_samples_val": [100, 200],
+                                               "n_samples_train": [10, 50]}
                                 }
 
 # model_configs["DGR_VS_concat"] = {"class": DGR,
