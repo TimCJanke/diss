@@ -9,7 +9,7 @@ from mvpreg.mvpreg import AdversarialDGR as GAN
 from helpers import run_experiment, analyze_experiment
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_set", type=str, required=True, choices=["wind_spatial", "solar_spatial", "load"])
+parser.add_argument("data_set", type=str, choices=["wind_spatial", "solar_spatial", "load"])
 parser.add_argument("--n_train", type=int, required=False)
 parser.add_argument("--n_val", type=int, required=False)
 parser.add_argument("--n_test", type=int, required=False)
@@ -19,7 +19,7 @@ args = parser.parse_args()
 
 data_set = args.data_set
 
-if args.n_train:
+if args.n_train is not None:
     n_train = args.n_train
 else:
     if data_set == "wind_spatial":
@@ -29,7 +29,7 @@ else:
     elif data_set == "load":
         n_train = 365*4-28-7
 
-if args.n_val:
+if args.n_val is not None:
     n_val = args.n_val
 else:
     if data_set == "wind_spatial":
@@ -39,7 +39,7 @@ else:
     elif data_set == "load":
         n_val = 7*4
 
-if args.n_test:
+if args.n_test is not None:
     n_test = args.n_test
 else:
     if data_set == "wind_spatial":
@@ -49,15 +49,25 @@ else:
     elif data_set == "load":
         n_test = 7*4
 
-if args.move_testset_window:
+if args.move_testset_window is not None:
     move_testset_window = args.move_testset_window
 else:
     move_testset_window = True
 
-if args.tag:
+if args.tag is None:
     tag = args.tag
 else:
     tag=None
+    
+    
+print("\nRunning experiment with following options:")
+print(f"data_set: {data_set}")
+print(f"n_train: {n_train}")
+print(f"n_val: {n_val}")
+print(f"n_test: {n_test}")
+print(f"move_testset_window: {move_testset_window}")
+print(f"tag: {tag}\n")
+
 
 if data_set == "wind_spatial":
 # data set
