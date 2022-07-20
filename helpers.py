@@ -107,13 +107,17 @@ def run_experiment(data_set_config,
     y_predict = {key: {} for key in model_configs.keys()}
     train_splits, test_splits = timeseries_split(idx=np.arange(0, len(x), 1), len_train=n_train_val, len_test=n_test, moving_window=data_set_config["moving_window"])
     
+    
     if move_testset_window is False:
         train_splits = train_splits[0:1]
         test_splits = test_splits[0:1]
-    
-    if isinstance(move_testset_window, int):
+    elif move_testset_window is True:
+        pass
+    elif isinstance(move_testset_window, int): # 
         train_splits = train_splits[0:move_testset_window+1]
         test_splits = test_splits[0:move_testset_window+1]   
+    else:
+        raise ValueError(f"move_testset_window must be boolean or positive int.")
     
     pbar = tqdm(total=len(test_splits))
     for i, (idx_train_val, idx_test) in enumerate(zip(train_splits, test_splits)):
