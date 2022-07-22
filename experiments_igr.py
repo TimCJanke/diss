@@ -91,7 +91,7 @@ if data_set == "wind_spatial":
     # shared configs for core NN
     nn_base_config = {"n_layers": 3,
                     "n_neurons": 200,
-                    "activation": "elu",
+                    "activation": "relu",#"elu",
                     "output_activation": None,
                     "censored_left": 0.0, 
                     "censored_right": 1.0, 
@@ -208,25 +208,26 @@ model_configs["DGR"] = {"class": DGR,
                                         "n_samples_train": 10,
                                         "n_samples_val": 100,
                                         "dim_latent": dim_latent,
-                                        "output_scaler": "Standard"
+                                        "output_scaler": "Standard",
+                                        "loss": "ES"
                                         },
-                        "config_var": {"conditioning": ["concatenate", "FiLM"],
-                                        "loss": ["ES", "VS"]
+                        "config_var": {"conditioning": ["concatenate", "FiLM"]#,
+                                        #"loss": ["ES", "VS"]
                                         }
                         }
 
-model_configs["GAN"] = {"class": GAN,
-                        "config_fixed": {**nn_base_config, 
-                                        "n_samples_val": 100,
-                                        "dim_latent": dim_latent,
-                                        "output_scaler": "Standard",
-                                        "label_smoothing": 0.1,
-                                        "optimizer_kwargs": {"beta_1": 0.0, "learning_rate": 0.0005},
-                                        "optimizer_discriminator_kwargs": {"beta_1": 0.0, "learning_rate": 0.0005},
-                                        },
+# model_configs["GAN"] = {"class": GAN,
+#                         "config_fixed": {**nn_base_config, 
+#                                         "n_samples_val": 100,
+#                                         "dim_latent": dim_latent,
+#                                         "output_scaler": "Standard",
+#                                         "label_smoothing": 0.1,
+#                                         "optimizer_kwargs": {"beta_1": 0.0, "learning_rate": 0.0005},
+#                                         "optimizer_discriminator_kwargs": {"beta_1": 0.0, "learning_rate": 0.0005},
+#                                         },
                         
-                        "config_var": {"conditioning": ["concatenate", "FiLM"]}
-                        }
+#                         "config_var": {"conditioning": ["concatenate", "FiLM"]}
+#                         }
 
 
 
