@@ -54,7 +54,7 @@ if args.move_testset_window is not None:
 else:
     move_testset_window = True
 
-if args.tag is None:
+if args.tag is not None:
     tag = args.tag
 else:
     tag=None
