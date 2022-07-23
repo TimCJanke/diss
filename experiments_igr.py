@@ -133,7 +133,7 @@ if data_set == "solar_spatial":
     # shared configs for core NN
     nn_base_config = {"n_layers": 3,
                     "n_neurons": 200,
-                    "activation": "elu",
+                    "activation": "relu",#"elu",
                     "output_activation": None,
                     "censored_left": 0.0, 
                     "censored_right": 1.0, 
