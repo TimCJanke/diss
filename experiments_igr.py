@@ -100,6 +100,19 @@ if data_set == "wind_spatial":
 
     # configs for each model
     model_configs={}
+    
+    # Linear paramertic model with Logit-Normal target dist
+    model_configs["LogitNLinear"] = {"class": PRM,
+                                    "config_fixed": {"n_layers": 0,
+                                                    "output_activation": None,
+                                                    "censored_left": 0.0, 
+                                                    "censored_right": 1.0, 
+                                                    "input_scaler": "Standard", 
+                                                    "distribution": "LogitNormal",
+                                                    "output_scaler": None,
+                                                    },
+                                    "config_var": {}
+                                    }
     model_configs["LogitN"] = {"class": PRM,
                             "config_fixed": {**nn_base_config, 
                                                 "distribution": "LogitNormal",
@@ -142,7 +155,20 @@ if data_set == "solar_spatial":
 
     # configs for each model
     model_configs={}
-    
+
+    # Linear paramertic model with Logit-Normal target dist
+    model_configs["LogitNLinear"] = {"class": PRM,
+                                    "config_fixed": {"n_layers": 0,
+                                                    "output_activation": None,
+                                                    "censored_left": 0.0, 
+                                                    "censored_right": 1.0,                                                    
+                                                    "input_scaler": "Standard", 
+                                                    "distribution": "LogitNormal",
+                                                    "output_scaler": None,
+                                                    },
+                                    "config_var": {}
+                                    }
+
     # Parametric model with LogitNormal targets
     model_configs["LogitN"] = {"class": PRM,
                             "config_fixed": {**nn_base_config, 
@@ -184,6 +210,16 @@ if data_set == "load":
     # configs for each model
     model_configs={}
 
+    # Linear paramertic model with Normal target dist
+    model_configs["NormalLinear"] = {"class": PRM,
+                                    "config_fixed": {"n_layers": 0,
+                                                    "output_activation": None,
+                                                    "input_scaler": "Standard", 
+                                                    "distribution": "Normal",
+                                                    "output_scaler": "Standard",
+                                                    },
+                                    "config_var": {}
+                                    }
 
     # Paramertic model with Normal target dist
     model_configs["Normal"] = {"class": PRM,
