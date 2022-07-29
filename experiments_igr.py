@@ -47,7 +47,7 @@ else:
     elif data_set == "solar_spatial":
         n_test = 14*7*1
     elif data_set == "load":
-        n_test = 7*4
+        n_test = 7
 
 if args.move_testset_window is not None:
     move_testset_window = args.move_testset_window
